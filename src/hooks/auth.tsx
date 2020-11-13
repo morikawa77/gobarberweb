@@ -37,9 +37,7 @@ const AuthProvider: React.FC = ({ children }) => {
       password,
     });
 
-    // Actual backend no return 'user' return 'userWithoutPassword'
-    // const { token, user } = response.data;
-    const { token, userWithoutPassword: user } = response.data;
+    const { token, user } = response.data;
 
     localStorage.setItem('@GoBarber:token', token);
     localStorage.setItem('@GoBarber:user', JSON.stringify(user));

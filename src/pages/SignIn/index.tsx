@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { FiLogIn, FiMail, FiLock } from 'react-icons/fi';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
@@ -26,6 +26,7 @@ const SignIn: React.FC = () => {
 
   const { signIn } = useAuth();
   const { addToast } = useToast();
+
   const history = useHistory();
 
   const handleSubmit = useCallback(
@@ -62,7 +63,7 @@ const SignIn: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na autenticação',
-          description: 'Ocorreu um erro a fazer login, cheque as credenciais.',
+          description: 'Ocorreu um erro ao fazer login, cheque as credenciais.',
         });
       }
     },
@@ -77,6 +78,7 @@ const SignIn: React.FC = () => {
 
           <Form ref={formRef} onSubmit={handleSubmit}>
             <h1>Faça seu logon</h1>
+
             <Input name="email" icon={FiMail} placeholder="E-mail" />
             <Input
               name="password"
@@ -84,15 +86,19 @@ const SignIn: React.FC = () => {
               type="password"
               placeholder="Senha"
             />
+
             <Button type="submit">Entrar</Button>
-            <Link to="forgot-password">Esqueci minha senha</Link>
+
+            <Link to="/forgot-password">Esqueci minha senha</Link>
           </Form>
+
           <Link to="/signup">
             <FiLogIn />
             Criar conta
           </Link>
         </AnimationContainer>
       </Content>
+
       <Background />
     </Container>
   );
