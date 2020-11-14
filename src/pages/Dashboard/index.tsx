@@ -1,12 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { isToday, format } from 'date-fns';
+import {
+  isToday,
+  format,
+  isAfter,
+  parseISO,
+  isSaturday,
+  isSunday,
+  startOfWeek,
+  addDays,
+} from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker, { DayModifiers } from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
 
 import { FiClock, FiPower } from 'react-icons/fi';
-import { parseISO } from 'date-fns/esm';
-import { parse } from 'url';
 import {
   Container,
   Header,
@@ -41,8 +48,25 @@ interface Appointment {
 
 const Dashboard: React.FC = () => {
   const { signOut, user } = useAuth();
-  const [selectDate, setSelectDate] = useState(new Date());
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const nextWeekDay = useMemo(() => {
+    const today = new Date();
+    if (isSaturday(today)) {
+      return addDays(startOfWeek(new Date(today), { weekStartsOn: 1 }), 7);
+    }
+    if (isSunday(today)) {
+      return startOfWeek(new Date(today), { weekStartsOn: 1 });
+    }
+    return today;
+  }, []);
+
+  // TODO:
+  // TEST ON SUNDAY AND MONDAY - CHANGING O.S. CLOCK DONT CHANGE DOCKER'S DATABASES CLOCKS
+
+  // const [selectDate, setSelectDate] = useState(new Date());
+  // const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectDate, setSelectDate] = useState(nextWeekDay);
+  const [currentMonth, setCurrentMonth] = useState(nextWeekDay);
 
   const [monthAvailability, setMonthAvailability] = useState<
     MonthAvailabilityItem[]
@@ -51,7 +75,7 @@ const Dashboard: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const handleDateChange = useCallback((day: Date, modifiers: DayModifiers) => {
-    if (modifiers.available) {
+    if (modifiers.available && !modifiers.disabled) {
       setSelectDate(day);
     }
   }, []);
@@ -128,6 +152,12 @@ const Dashboard: React.FC = () => {
     });
   }, [appointments]);
 
+  const nextAppointment = useMemo(() => {
+    return appointments.find(appointment =>
+      isAfter(parseISO(appointment.date), new Date()),
+    );
+  }, [appointments]);
+
   return (
     <Container>
       <Header>
@@ -157,23 +187,31 @@ const Dashboard: React.FC = () => {
             <span>{weekDayAsText}</span>
           </p>
 
-          <NextAppointment>
-            <strong>Atendimento a seguir</strong>
-            <div>
-              <img
-                src="https://avatars0.githubusercontent.com/u/646224?s=460&u=2e7883bf4571c466c1e4aad25e11ad3b6d360440&v=4"
-                alt="Reginaldo Morikawa"
-              />
+          {isToday(selectDate) && nextAppointment && (
+            <NextAppointment>
+              <strong>Atendimento a seguir</strong>
+              <div>
+                <img
+                  src={nextAppointment.user.avatar_url}
+                  alt={nextAppointment.user.name}
+                />
 
-              <strong>Reginaldo Morikawa</strong>
-              <span>
-                <FiClock />
-              </span>
-            </div>
-          </NextAppointment>
+                <strong>{nextAppointment.user.name}</strong>
+                <span>
+                  <FiClock />
+                  {nextAppointment.hourFormatted}
+                </span>
+              </div>
+            </NextAppointment>
+          )}
 
           <Section>
             <strong>Manhã</strong>
+
+            {morningAppointments.length === 0 && (
+              <p>Nenhum agendamento neste período.</p>
+            )}
+
             {morningAppointments.map(appointment => (
               <Appointment key={appointment.id}>
                 <span>
@@ -195,6 +233,11 @@ const Dashboard: React.FC = () => {
 
           <Section>
             <strong>Tarde</strong>
+
+            {afternoonAppointments.length === 0 && (
+              <p>Nenhum agendamento neste período.</p>
+            )}
+
             {afternoonAppointments.map(appointment => (
               <Appointment key={appointment.id}>
                 <span>
